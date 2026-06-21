@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONCUR-IR 2026 — Interactive Checklist</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1C3A6E;--blue:#2E75B6;--teal:#1A7FAA;
+  --condbg:#EEF3FA;--condhdr:#2E75B6;
+  --gray:#6B7A99;--border:#D0D8E8;--white:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:"Poppins",system-ui,sans-serif;background:#fff;color:#1a1a1a;font-size:14px;line-height:1.6;}
+
+/* NAV */
+nav{background:var(--navy);padding:0 48px;display:flex;align-items:center;gap:20px;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
+.nav-logo{display:flex;align-items:center;gap:14px;}
+.nav-logo img{height:34px;display:block;}
+.nav-logo-text{color:white;font-size:15px;font-weight:700;letter-spacing:-0.2px;}
+.nav-logo-sub{color:rgba(255,255,255,0.5);font-size:11px;font-weight:400;display:block;margin-top:-2px;}
+.nav-badge{margin-left:auto;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.65);font-size:10.5px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:3px 10px;}
+.nav-back{color:rgba(255,255,255,0.6);font-size:12.5px;font-weight:500;text-decoration:none;margin-left:12px;padding:6px 14px;border:1px solid rgba(255,255,255,0.2);}
+.nav-back:hover{background:rgba(255,255,255,0.08);color:white;}
+
+/* SETUP BAR */
+.setup-panel{background:#f7f9fd;border-bottom:2px solid var(--border);padding:14px 48px;position:sticky;top:60px;z-index:90;}
+.setup-row{display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;}
+.setup-section{flex:1;min-width:220px;}
+.setup-label{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.design-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:5px 14px;border:1.5px solid var(--border);background:white;color:var(--navy);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;user-select:none;font-family:inherit;}
+.pill:hover{border-color:var(--blue);color:var(--blue);}
+.pill.active{background:var(--navy);border-color:var(--navy);color:white;}
+
+/* PROGRESS */
+.progress-wrap{min-width:200px;}
+.progress-numbers{display:flex;justify-content:space-between;font-size:12px;color:var(--gray);margin-bottom:6px;}
+.progress-numbers strong{color:var(--navy);font-size:14px;}
+.progress-bar-bg{background:var(--condbg);height:6px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));width:0%;transition:width 0.3s;}
+
+/* BUTTONS */
+.action-btns{display:flex;gap:8px;align-items:flex-end;padding-bottom:2px;}
+.btn{padding:7px 16px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:inherit;}
+.btn-primary{background:var(--navy);color:white;}
+.btn-primary:hover{background:var(--blue);}
+.btn-outline{background:white;color:var(--navy);border:1.5px solid var(--border);}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);}
+.btn-danger{background:white;color:#c0392b;border:1.5px solid #f0c0bb;}
+.btn-danger:hover{background:#fff5f5;}
+
+/* INSTRUCTIONS */
+.instructions{background:var(--condbg);border-left:3px solid var(--blue);padding:10px 16px;font-size:12.5px;color:var(--gray);margin:14px 48px;}
+.instructions strong{color:var(--navy);}
+
+/* DESIGN GATE */
+.design-gate{background:#f7f9fd;border:2px dashed var(--border);padding:32px;text-align:center;margin:20px 48px;display:none;}
+.design-gate.visible{display:block;}
+.design-gate-icon{font-size:28px;margin-bottom:10px;color:var(--border);}
+.design-gate p{font-size:13px;color:var(--gray);margin-bottom:0;}
+.design-gate strong{color:var(--navy);}
+body.no-design .custom-cb{pointer-events:none;opacity:0.25;}
+body.no-design .page-input{pointer-events:none;opacity:0.25;}
+body.no-design #checklist{opacity:0.35;pointer-events:none;}
+
+/* CHECKLIST */
+.checklist{padding:0 48px 48px;max-width:1100px;margin:0 auto;}
+
+/* DOMAIN */
+.domain{margin-bottom:12px;border:1px solid var(--border);overflow:hidden;}
+.domain-header{background:var(--navy);color:white;padding:10px 18px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.domain-id{background:rgba(255,255,255,0.15);padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:1px;}
+.domain-toggle{margin-left:auto;font-size:14px;opacity:0.7;}
+.domain-body{background:white;}
+
+/* COLUMN HEADERS */
+.col-headers{display:grid;grid-template-columns:56px 1fr 110px;padding:6px 16px;background:#f4f7fc;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.6px;}
+
+/* ITEM ROW */
+.item-row{display:grid;grid-template-columns:56px 1fr 110px;padding:9px 16px;border-bottom:1px solid #eef2f9;transition:background 0.1s;align-items:start;}
+.item-row:hover{background:#fafcff;}
+.item-row.checked-row{background:#f2fbf8;}
+.item-id{font-size:11px;color:var(--gray);font-weight:600;padding-top:2px;}
+.item-content{padding-right:14px;}
+.item-check-wrap{display:flex;align-items:flex-start;gap:10px;}
+.custom-cb{width:17px;height:17px;border:2px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:2px;background:white;}
+.custom-cb:hover{border-color:var(--blue);}
+.custom-cb.checked{background:var(--teal);border-color:var(--teal);}
+.custom-cb.checked::after{content:'✓';color:white;font-size:11px;font-weight:700;}
+.item-text{font-size:13px;color:#222;line-height:1.5;}
+.item-text.checked-text{color:var(--gray);text-decoration:line-through;}
+.rec-tag{font-size:10px;color:var(--teal);font-style:italic;font-weight:500;margin-left:5px;white-space:nowrap;}
+.sub-items{margin-top:5px;padding-left:4px;}
+.sub-item{font-size:11.5px;color:var(--gray);padding:2px 0 2px 10px;border-left:2px solid var(--border);margin-bottom:2px;font-style:italic;line-height:1.4;}
+.sub-item::before{content:'→ ';color:#5B9BD5;font-style:normal;font-weight:600;}
+
+/* PAGE INPUT */
+.page-input{border:1px solid var(--border);padding:4px 8px;font-size:12px;width:90px;color:var(--navy);background:white;font-family:inherit;}
+.page-input:focus{outline:none;border-color:var(--blue);}
+.page-input::placeholder{color:#ccc;}
+
+/* CONDITIONAL */
+.cond-block{display:none;}
+.cond-block.visible{display:block;}
+.cond-header{background:var(--condhdr);color:white;padding:7px 16px 7px 22px;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.cond-header::before{content:'▼';font-size:9px;opacity:0.8;}
+.cond-note{background:#f5f7fa;padding:8px 16px 8px 22px;font-size:11px;color:var(--gray);font-style:italic;border-bottom:1px solid var(--border);line-height:1.5;}
+.cond-block .item-row{background:var(--condbg);}
+.cond-block .item-row:hover{background:#e4edfa;}
+.cond-block .item-id{color:var(--blue);}
+
+/* FOOTER */
+.footer{background:#111827;color:rgba(255,255,255,0.4);font-size:11.5px;padding:20px 48px;margin-top:24px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:white;padding:10px 18px;font-size:13px;transform:translateY(60px);opacity:0;transition:all 0.3s;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.2);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* PRINT DOCUMENT HEADER (hidden on screen) */
+.print-doc-header{display:none;}
+
+@media print{
+  @page{margin:16mm 14mm;size:A4;}
+  nav,.setup-panel,.action-btns,.toast,.footer,.instructions{display:none!important;}
+  .print-doc-header{display:block!important;}
+  .checklist{padding:0!important;max-width:none!important;}
+  body{font-size:7.5pt!important;color:#000!important;line-height:1.25!important;}
+  .cond-block{display:none!important;}
+  .cond-block.visible{display:block!important;}
+  .sub-items{display:none!important;}
+  .domain{margin-bottom:2pt!important;border:0.5pt solid #c0c8d8!important;break-inside:avoid;overflow:hidden!important;}
+  .domain-header{background:#1C3A6E!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:3pt 8pt!important;font-size:7.5pt!important;}
+  .domain-id{background:rgba(255,255,255,0.2)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:6.5pt!important;}
+  .domain-toggle{display:none!important;}
+  .domain-body{display:block!important;}
+  .col-headers{padding:2pt 8pt!important;font-size:6.5pt!important;}
+  .item-row{padding:2pt 8pt!important;border-bottom:0.3pt solid #e8eaf0!important;grid-template-columns:44px 1fr 58pt!important;}
+  .item-id{font-size:6.5pt!important;}
+  .item-text{font-size:7.5pt!important;color:#000!important;line-height:1.25!important;}
+  .rec-tag{font-size:6pt!important;}
+  .cond-block .item-row{background:#f3f7fd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .cond-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:2.5pt 8pt 2.5pt 14pt!important;font-size:7pt!important;}
+  .cond-note{padding:1.5pt 8pt 1.5pt 14pt!important;font-size:6.5pt!important;}
+  .page-input{border:0.5pt solid #999!important;font-size:7pt!important;padding:1pt 3pt!important;width:52pt!important;max-width:52pt!important;}
+  .custom-cb{border:1pt solid #333!important;width:8pt!important;height:8pt!important;margin-top:1pt!important;flex-shrink:0!important;position:relative!important;}
+  .custom-cb.checked{background:#1A7FAA!important;border-color:#1A7FAA!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .custom-cb.checked::after{content:'✓'!important;color:#fff!important;font-size:6pt!important;font-weight:900!important;position:absolute!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .item-check-wrap{gap:6pt!important;}
+}
+@media(max-width:700px){
+  nav,.setup-panel,.checklist,.instructions{padding-left:16px;padding-right:16px;}
+  .setup-panel{top:60px;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <img src="FUNDO_VAZIO.png" alt="CONCUR-IR">
+    <div>
+      <span class="nav-logo-text">CONCUR-IR 2026</span>
+      <span class="nav-logo-sub">Interactive Reporting Checklist</span>
+    </div>
+  </div>
+  <a class="nav-back" href="CONCUR-IR-site.html">&#8592; Back to site</a>
+  <div class="nav-badge">CONCUR-IR 2026</div>
+</nav>
+  <div class="version-badge">CONCUR-IR 2026</div>
+</div>
+
+<!-- ── SETUP PANEL ───────────────────────────────────────────────── -->
+<div class="setup-panel">
+  <div class="setup-row">
+    <div class="setup-section">
+      <div class="setup-label">Study Design</div>
+      <div class="design-pills">
+        <div class="pill" data-design="case-series">Case Series</div>
+        <div class="pill" data-design="cohort">Cohort</div>
+        <div class="pill" data-design="rct">RCT</div>
+        <div class="pill" data-design="registry">Registry</div>
+        <div class="pill" data-design="case-control">Case-Control</div>
+      </div>
+    </div>
+
+    <div class="setup-section progress-wrap">
+      <div class="setup-label">Progress</div>
+      <div class="progress-numbers">
+        <span><strong id="checked-count">0</strong> / <span id="total-count">0</span> items</span>
+        <span id="pct-text">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="action-btns">
+      <button class="btn btn-primary" onclick="window.print()">Export PDF</button>
+      <button class="btn btn-outline" onclick="saveProgress()">Save</button>
+      <button class="btn btn-danger" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── INSTRUCTIONS ──────────────────────────────────────────────── -->
+<div class="instructions">
+  <strong>Instructions:</strong> Complete all core items for every study.
+  Select your study design(s) above to reveal additional conditional items.
+  All items are best-practice recommendations — none constitutes a mandatory publication requirement.
+  Report all outcomes as both absolute numbers and proportions (n/N, %) wherever applicable.
+  Enter the manuscript page number where each item is reported in the rightmost column.
+</div>
+
+<!-- ── PRINT DOCUMENT HEADER (hidden on screen) ──────────────────── -->
+<div class="print-doc-header">
+  <div style="display:flex;align-items:center;gap:18pt;border-bottom:2pt solid #1C3A6E;padding-bottom:12pt;margin-bottom:16pt;">
+    <img src="Logo Concur.png" style="height:56pt;">
+    <div>
+      <div style="font-size:16pt;font-weight:700;color:#1C3A6E;letter-spacing:-0.3pt;">CONCUR-IR 2026</div>
+      <div style="font-size:10pt;color:#444;margin-top:2pt;">Consensus Criteria for Uniform Reporting in Interventional Radiology</div>
+      <div style="font-size:8pt;color:#888;margin-top:4pt;letter-spacing:0.3pt;">REPORTING CHECKLIST — SUPPLEMENTARY MATERIAL FOR MANUSCRIPT SUBMISSION</div>
+    </div>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:16pt;">
+    <tr>
+      <td style="padding:6pt 8pt;border:0.5pt solid #bbb;"><span style="font-size:7.5pt;color:#888;text-transform:uppercase;letter-spacing:0.4pt;display:block;margin-bottom:14pt;">Manuscript title</span></td>
+    </tr>
+    <tr>
+      <td style="padding:6pt 8pt;border:0.5pt solid #bbb;"><span style="font-size:7.5pt;color:#888;text-transform:uppercase;letter-spacing:0.4pt;display:block;margin-bottom:4pt;">Study design(s)</span><span id="print-designs" style="font-size:8.5pt;"></span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ── DESIGN GATE ────────────────────────────────────────────────── -->
+<div class="design-gate visible" id="design-gate">
+  <div class="design-gate-icon">&#9744;</div>
+  <p><strong>Select a study design above to begin.</strong><br>At least one design must be selected before you can complete the checklist.</p>
+</div>
+
+<!-- ── CHECKLIST ─────────────────────────────────────────────────── -->
+<div class="checklist" id="checklist"></div>
+
+<!-- ── FOOTER ────────────────────────────────────────────────────── -->
+<div class="footer">
+  CONCUR-IR 2026 &nbsp;·&nbsp; Consensus Criteria for Uniform Reporting in Interventional Radiology &nbsp;·&nbsp; delphi@concur-ir.org
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const DOMAINS = [
+  {
+    id:'D1', title:'STUDY DESIGN & PRE-REGISTRATION',
+    items:[
+      {id:'1.1', text:'Study design explicitly stated', sub:['Prospective vs. retrospective','Observational vs. interventional','Single-center vs. multi-center'], rec:false},
+      {id:'1.2', text:'Study period reported (enrollment start and end dates)', sub:[], rec:false},
+      {id:'1.3', text:'Ethics committee approval stated with institutional reference number', sub:[], rec:false},
+      {id:'1.4', text:'Informed consent process described', sub:['If individual consent: confirmation provided','If waived: justification and IRB acknowledgment stated','If registry-based: data use agreement described'], rec:false},
+      {id:'1.5', text:'Prospective pre-registration declared (ClinicalTrials.gov, UMIN, ISRCTN, ReBEC, etc.)', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'1.RCT.1', text:'Trial registration number reported with primary endpoint as registered', sub:[], rec:false},
+        {id:'1.RCT.2', text:'Post-registration protocol amendments disclosed with rationale', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'1.REG.1', text:'Registry governance and data custodian identified', sub:[], rec:false},
+        {id:'1.REG.2', text:'Registry start date vs. study extraction period distinguished', sub:[], rec:false},
+      ]},
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'1.CS.1', text:'IDEAL developmental stage declared (Stage 1, 2a, 2b, or 3)', sub:[], rec:true},
+        {id:'1.CS.2', text:'Whether technique was novel or established at time of study stated', sub:[], rec:false},
+      ]},
+    ]
+  },
+  {
+    id:'D2', title:'PATIENT SELECTION & ELIGIBILITY',
+    items:[
+      {id:'2.1', text:'Inclusion criteria explicitly stated', sub:[], rec:false},
+      {id:'2.2', text:'Exclusion criteria explicitly stated', sub:[], rec:false},
+      {id:'2.3', text:'Patient selection process described (consecutive, random, or convenience — with rationale)', sub:[], rec:false},
+      {id:'2.4', text:'Patient flow diagram provided (screened → eligible → enrolled → analyzed)', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series',
+       note:'In case series, selection bias is the primary threat to validity. Authors should clearly state whether all eligible patients were included and whether enrollment was consecutive.',
+       items:[
+        {id:'2.CS.1', text:'Consecutive enrollment confirmed, or deviation explicitly acknowledged', sub:[], rec:true},
+        {id:'2.CS.2', text:'Whether all eligible patients were included or only a subset, and why', sub:[], rec:false},
+      ]},
+      {designs:['cohort'], label:'Cohort',
+       note:'Cohort studies in IR frequently draw from institutional databases. The source population and any filtering from the broader registry to the study cohort must be transparent to allow assessment of generalizability.',
+       items:[
+        {id:'2.CO.1', text:'Source population clearly defined (institutional registry, referral base, or community-based)', sub:[], rec:false},
+        {id:'2.CO.2', text:'Comparator group selection methodology described', sub:[], rec:true},
+      ]},
+      {designs:['rct'], label:'RCT',
+       note:'RCTs in IR are prone to post-randomization exclusions due to technical failures or anatomical unsuitability discovered at the time of the procedure. These must be distinguished from pre-procedural exclusions.',
+       items:[
+        {id:'2.RCT.1', text:'Screening log with reasons for exclusion reported', sub:[], rec:true},
+        {id:'2.RCT.2', text:'Post-randomization exclusions distinguished from pre-procedural exclusions (e.g. technical failure, anatomical unsuitability)', sub:[], rec:false},
+        {id:'2.RCT.3', text:'Run-in period described if applicable', sub:[], rec:false},
+      ]},
+      {designs:['registry'], label:'Registry',
+       note:'Registry-based IR studies carry the risk of differential inclusion. Authors should quantify completeness and discuss potential enrollment bias.',
+       items:[
+        {id:'2.REG.1', text:'Proportion of eligible registry patients included reported', sub:[], rec:false},
+        {id:'2.REG.2', text:'Potential selection bias from registry enrollment criteria discussed', sub:[], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D3a', title:'BASELINE CLINICAL CHARACTERIZATION',
+    items:[
+      {id:'3a.1', text:'Age and sex reported for all patients', sub:[], rec:false},
+      {id:'3a.2', text:'Relevant comorbidities reported (at minimum: diabetes, hypertension, CKD, coagulopathy, prior oncological treatment when applicable)', sub:[], rec:false},
+      {id:'3a.3', text:'Performance status or functional scale reported (e.g. ECOG, Karnofsky, ASA — appropriate to clinical context)', sub:[], rec:true},
+      {id:'3a.4', text:'Relevant laboratory values reported (e.g. creatinine, INR, platelets, tumor markers — contextual to procedure)', sub:[], rec:false},
+      {id:'3a.5', text:'Prior treatments related to current indication described (e.g. prior systemic therapy, locoregional treatment, surgical attempt)', sub:[], rec:false},
+      {id:'3a.6', text:'Relevant current medications reported (anticoagulation, antiplatelet, immunosuppression — where procedurally relevant)', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'3a.C1', text:'Baseline characteristics reported separately per group', sub:[], rec:false},
+        {id:'3a.C2', text:'Clinically meaningful imbalances between groups identified and addressed in statistical analysis', sub:[], rec:true},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'3a.RCT.1', text:'Standardized mean differences reported for key baseline variables (preferred over p-values for baseline comparisons)', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'3a.REG.1', text:'Completeness of each baseline variable reported (% available)', sub:[], rec:false},
+        {id:'3a.REG.2', text:'Missing baseline data handling described (imputation method or sensitivity analysis)', sub:[], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D3b', title:'BASELINE ANATOMICAL & RADIOLOGICAL CHARACTERIZATION',
+    items:[
+      {id:'3b.1', text:'Imaging modality used for baseline assessment stated, with date relative to procedure', sub:[], rec:false},
+      {id:'3b.2', text:'Target anatomy described with objective measurements (lesion size, vessel diameter, stenosis degree, thrombus extent — contextual to procedure)', sub:[], rec:false},
+      {id:'3b.3', text:'Anatomical complexity reported (tortuosity, calcification, prior surgical anatomy, access challenges)', sub:[], rec:true},
+      {id:'3b.4', text:'Validated staging or complexity classification applied when one exists (BCLC, TASC II, Rutherford, Child-Pugh, mRECIST, etc.)', sub:[], rec:true},
+      {id:'3b.5', text:'Central vs. local imaging review stated', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'3b.C1', text:'Anatomical characteristics reported separately per group', sub:[], rec:false},
+        {id:'3b.C2', text:'Anatomical complexity included as covariate in adjusted analyses when groups differ', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'3b.REG.1', text:'Prospectively vs. retrospectively collected anatomical variables distinguished', sub:[], rec:false},
+      ]},
+    ]
+  },
+  {
+    id:'D4', title:'INTERVENTION INDICATION & ALTERNATIVES',
+    items:[
+      {id:'4.1', text:'Clinical indication for the procedure explicitly stated', sub:[], rec:false},
+      {id:'4.2', text:'Indication based on objective and reproducible criteria (imaging, laboratory, functional — not operator discretion alone)', sub:[], rec:true},
+      {id:'4.3', text:'Alternative treatment options considered and described (surgical, medical, other IR approach)', sub:[], rec:true},
+      {id:'4.4', text:'Reason for choosing IR over alternatives stated', sub:[], rec:true},
+      {id:'4.5', text:'Whether IR was first-line, second-line, or rescue therapy explicitly declared', sub:[], rec:false},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'4.CS.1', text:'Whether indication was homogeneous across all patients or varied — stated explicitly', sub:[], rec:false},
+      ]},
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'4.C1', text:'Indication criteria confirmed as applied uniformly across both groups', sub:[], rec:false},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'4.RCT.1', text:'Equipoise justification provided (why both arms were considered clinically acceptable at time of enrollment)', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'4.REG.1', text:'Whether indication was protocol-driven or left to operator discretion — stated explicitly', sub:[], rec:false},
+      ]},
+    ]
+  },
+  {
+    id:'D5', title:'OPERATOR & CENTER CHARACTERISTICS',
+    items:[
+      {id:'5.1', text:'Number of operators involved reported', sub:[], rec:false},
+      {id:'5.2', text:'Operator experience in the specific procedure stated (years of experience, number of prior cases, or formal training — at least one metric)', sub:[], rec:false},
+      {id:'5.3', text:'Annual center volume for the specific procedure reported', sub:[], rec:true},
+      {id:'5.4', text:'Academic vs. community center declared', sub:[], rec:false},
+      {id:'5.5', text:'Whether the study period overlapped with a learning curve explicitly addressed', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'5.CS.1', text:'Single-operator vs. multi-operator series declared', sub:[], rec:false},
+        {id:'5.CS.2', text:'If multi-operator: inter-operator variability in technique acknowledged', sub:[], rec:true},
+      ]},
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'5.C1', text:'Operator experience comparable between groups, or difference addressed in analysis', sub:[], rec:false},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'5.RCT.1', text:'Operator credentialing criteria pre-specified (minimum experience required to participate)', sub:[], rec:false},
+        {id:'5.RCT.2', text:'Operator volume during trial period reported', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'5.REG.1', text:'Number of participating centers reported', sub:[], rec:false},
+        {id:'5.REG.2', text:'Variability in operator experience and center volume across sites described', sub:[], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D6a', title:'PROCEDURE DESCRIPTION — TECHNICAL EXECUTION',
+    items:[
+      {id:'6a.1', text:'Access route described (arterial, venous, percutaneous, transhepatic, etc.)', sub:[], rec:false},
+      {id:'6a.2', text:'Step-by-step technical description provided with sufficient detail for reproducibility', sub:[], rec:false},
+      {id:'6a.3', text:'Predefined procedural protocol or manual used — stated explicitly, or absence acknowledged', sub:[], rec:false},
+      {id:'6a.4', text:'Allowed technical variations described', sub:[], rec:true},
+      {id:'6a.5', text:'Technical success defined with objective, pre-specified criteria', sub:[], rec:false},
+      {id:'6a.6', text:'Bailout strategies described', sub:[], rec:true},
+      {id:'6a.7', text:'Technical failures reported separately from clinical failures', sub:[], rec:false},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'6a.CS.1', text:'Whether technique evolved during the study period acknowledged', sub:[], rec:true},
+      ]},
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'6a.C1', text:'Technical protocol confirmed as applied uniformly across both groups, or differences described', sub:[], rec:false},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'6a.RCT.1', text:'Protocol deviations documented and reported', sub:[], rec:false},
+        {id:'6a.RCT.2', text:'Co-interventions applied equally to both arms described', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'6a.REG.1', text:'Degree of technical standardization across participating centers described', sub:[], rec:false},
+      ]},
+    ]
+  },
+  {
+    id:'D6b', title:'PROCEDURE DESCRIPTION — IMAGING GUIDANCE',
+    items:[
+      {id:'6b.1', text:'Imaging modality used for guidance stated (fluoroscopy, US, CT, CBCT, MRI, fusion, etc.)', sub:[], rec:false},
+      {id:'6b.2', text:'Real-time guidance vs. pre-procedural planning only — distinguished explicitly', sub:[], rec:false},
+      {id:'6b.3', text:'Contrast agent used intraprocedurally described (type, concentration, volume — when applicable)', sub:[], rec:true},
+      {id:'6b.4', text:'Navigation or fusion software used identified (manufacturer, system name)', sub:[], rec:true},
+      {id:'6b.5', text:'Image quality or technical limitations of guidance acknowledged when relevant', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'6b.CS.1', text:'Changes in imaging guidance modality during the study period disclosed', sub:[], rec:true},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'6b.RCT.1', text:'Imaging guidance protocol standardized across sites and operators — confirmed or deviation described', sub:[], rec:false},
+      ]},
+    ]
+  },
+  {
+    id:'D6c', title:'PROCEDURE DESCRIPTION — DEVICES & MATERIALS',
+    items:[
+      {id:'6c.1', text:'All devices used identified (manufacturer, model, size/specifications)', sub:[], rec:false},
+      {id:'6c.2', text:'Embolic agents described when applicable (type, particle size, dose/volume delivered)', sub:[], rec:false},
+      {id:'6c.3', text:'Energy delivery parameters reported when applicable', sub:['Ablation (RFA, MWA, cryoablation, IRE): energy delivered, duration, target temperature or impedance','Radioembolization: dosimetry method, prescribed and delivered dose in Gy'], rec:false},
+      {id:'6c.4', text:'Drug or agent doses reported when applicable (chemotherapy, sclerosant, thrombolytic — concentration, volume, dwell time)', sub:[], rec:true},
+      {id:'6c.5', text:'Device generation or iteration identified when clinically relevant', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'6c.CS.1', text:'Device or material changes during the study period disclosed', sub:[], rec:true},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'6c.RCT.1', text:'Whether device/material was identical across all sites and operators confirmed', sub:[], rec:false},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'6c.REG.1', text:'Variability in devices and materials across centers described', sub:[], rec:false},
+        {id:'6c.REG.2', text:'Completeness of device/material data fields reported (% available)', sub:[], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D7', title:'PERIPROCEDURAL MANAGEMENT',
+    items:[
+      {id:'7.1', text:'Anesthesia or sedation type reported', sub:['If general anesthesia: ASA classification and airway management described','If conscious sedation: agents, doses, and monitoring level reported','If local only: explicit statement provided'], rec:false},
+      {id:'7.2', text:'Antibiotic prophylaxis addressed', sub:['If used: agent, dose, route, and timing reported','If not used: explicit statement provided'], rec:false},
+      {id:'7.3', text:'Antithrombotic management addressed', sub:['If anticoagulation was held: bridging protocol and resumption timing described','If anticoagulation was continued: rationale stated','If reversal agents were used: agent and dose reported'], rec:false},
+      {id:'7.4', text:'Post-procedural monitoring described', sub:['If ICU admission: indication and duration reported','If ward monitoring: duration and parameters reported','If day-case: discharge criteria explicitly stated'], rec:false},
+      {id:'7.5', text:'Post-procedural pain management addressed', sub:['If structured analgesia protocol used: regimen reported','If post-embolization syndrome anticipated: prophylactic or treatment protocol described'], rec:true},
+      {id:'7.6', text:'Adjunctive medications administered periprocedurally reported', sub:['If corticosteroids, antiemetics, vasopressors, or other agents used: drug, dose, and indication described'], rec:true},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'7.CS.1', text:'Whether a standardized periprocedural protocol was in place — stated explicitly', sub:[], rec:false},
+      ]},
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'7.C1', text:'Periprocedural management confirmed as uniform across groups, or differences explicitly described', sub:[], rec:false},
+        {id:'7.C2', text:'Any adjunctive treatments applied asymmetrically across groups disclosed', sub:[], rec:false},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'7.RCT.1', text:'Co-interventions standardized across sites confirmed, or protocol deviations described', sub:[], rec:false},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'7.REG.1', text:'Variability in periprocedural protocols across centers acknowledged', sub:[], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D8', title:'RADIATION, CONTRAST & DOSE DELIVERY',
+    items:[
+      {id:'8.1', text:'Radiation exposure metrics reported', sub:['If fluoroscopy used: fluoroscopy time AND at least one dose metric (DAP, reference point air kerma, or CTDI)','If CT guidance used: CTDI and DLP reported','If no ionizing radiation used: explicit statement provided'], rec:false},
+      {id:'8.2', text:'Radiation protection measures described (shielding, dose reduction protocols, or dose monitoring software)', sub:[], rec:true},
+      {id:'8.3', text:'Contrast agent exposure reported', sub:['If iodinated contrast used: agent type, concentration, and total volume reported','If gadolinium used: agent and total dose reported','If CO₂ or contrast-free: explicit statement provided'], rec:false},
+      {id:'8.4', text:'Renal function monitoring post-contrast addressed (if pre-existing CKD or high contrast volume: creatinine follow-up timing and results reported)', sub:[], rec:true},
+      {id:'8.5', text:'Cumulative exposure addressed in repeat or staged procedures (cumulative radiation dose and contrast volume reported)', sub:[], rec:true},
+      {id:'8.6', text:'Thermal or energy dose reported for ablative procedures', sub:['RFA / MWA / cryoablation / IRE: energy delivered, duration, target temperature or impedance','HIFU: acoustic power and sonication parameters'], rec:false},
+      {id:'8.7', text:'Radioembolization dosimetry reported (dosimetry method stated; prescribed and delivered dose in Gy reported)', sub:[], rec:false},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'8.CS.1', text:'Variability in exposure metrics across the series described', sub:[], rec:true},
+      ]},
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'8.C1', text:'Radiation and contrast exposure reported separately per group', sub:[], rec:false},
+        {id:'8.C2', text:'Significant exposure differences between groups addressed as potential confounder', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'8.REG.1', text:'Completeness of radiation and contrast data fields reported (% available)', sub:[], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D9', title:'OUTCOME DEFINITION & TAXONOMY',
+    items:[
+      {id:'9.1',  text:'Primary endpoint explicitly declared and pre-specified with objective criteria', sub:[], rec:false},
+      {id:'9.2',  text:'Secondary endpoints listed and defined', sub:[], rec:false},
+      {id:'9.3',  text:'Outcomes classified according to the IR taxonomy — technical, imaging/radiological, and clinical outcomes reported separately and not conflated', sub:[], rec:false},
+      {id:'9.4',  text:'Technical success defined using objective, pre-specified criteria', sub:['If SIR/CIRSE reporting standards exist for the procedure: definition used stated and reference cited','If no standard exists: definition provided with explicit justification'], rec:false},
+      {id:'9.5',  text:'Imaging response criteria stated when applicable', sub:['If oncological procedure: response criteria identified (mRECIST, RECIST 1.1, LI-RADS LR-TR, EASL, WHO — as appropriate)','If vascular procedure: patency definitions provided (primary, assisted primary, secondary)','If other: relevant imaging endpoint defined with timepoint'], rec:false},
+      {id:'9.6',  text:'Clinical success defined separately from technical success with its own objective criteria and assessment timepoint', sub:[], rec:false},
+      {id:'9.7',  text:'Outcome assessment method described', sub:['If independent adjudication or core lab used: stated explicitly','If operator-assessed: acknowledged as potential source of bias'], rec:true},
+      {id:'9.8',  text:'Assessment timepoints pre-specified for all primary and secondary endpoints', sub:[], rec:false},
+      {id:'9.9',  text:'Patient-reported outcomes (PROs) or quality of life instruments described when used (validated instrument identified; administration method and timepoints reported)', sub:[], rec:true},
+      {id:'9.10', text:'Composite endpoints fully disaggregated — all components defined and results of each reported individually', sub:[], rec:true},
+      {id:'9.11', text:'All outcomes reported as both absolute numbers AND proportions (n/N, %)', sub:['Denominator clearly stated for each timepoint','Rates must reflect the actual population at risk at each assessment point — not the original enrollment N','Example: "47 of 52 patients (90.4%)" — not "success rate was 90.4%"'], rec:true},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'9.CS.1', text:'Outcomes benchmarked against predefined thresholds or published reference values when no comparator group exists', sub:[], rec:true},
+      ]},
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'9.C1', text:'Primary endpoint identical and assessed by the same method across both groups', sub:[], rec:false},
+        {id:'9.C2', text:'Minimum clinically important difference (MCID) defined for primary endpoint', sub:[], rec:true},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'9.RCT.1', text:'Primary endpoint matches pre-registered endpoint — any changes disclosed with rationale', sub:[], rec:false},
+        {id:'9.RCT.2', text:'Superiority, non-inferiority, or equivalence design declared explicitly', sub:[], rec:false},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'9.REG.1', text:'Outcome ascertainment method described (active follow-up, database linkage, or administrative coding)', sub:[], rec:false},
+        {id:'9.REG.2', text:'Completeness of outcome data reported (% with primary endpoint available)', sub:[], rec:false},
+      ]},
+    ]
+  },
+  {
+    id:'D10', title:'ADVERSE EVENTS',
+    items:[
+      {id:'10.1',  text:'Adverse event classification system explicitly stated', sub:['If SIR classification used: minor (class A/B) and major (class C/D/E/F) reported separately','If CIRSE classification used: grade stated per event','If neither: classification system identified and reference cited'], rec:false},
+      {id:'10.1b', text:'Explicit definitions of major and minor complications provided as used in this study', sub:['Example: "Minor: SIR class A–B — no therapy or nominal therapy required. Major: SIR class C–F — therapy required, unplanned admission, permanent sequelae, or death"','If procedure-specific definitions used (e.g. post-embolization syndrome grading): criteria explicitly stated','If composite safety endpoint used: all components individually defined'], rec:false},
+      {id:'10.2',  text:'All adverse events reported as both absolute numbers AND proportions (n/N, %)', sub:['Denominator clearly stated per event','Events reported per procedure AND per patient when these differ'], rec:false},
+      {id:'10.3',  text:'Causal relationship to procedure stated for each event (procedure-related vs. disease-related vs. indeterminate)', sub:[], rec:false},
+      {id:'10.4',  text:'Timing of adverse events reported (intraprocedural, in-hospital ≤30 days, and post-discharge events reported separately)', sub:[], rec:true},
+      {id:'10.5',  text:'Mortality reported with cause attribution', sub:['All-cause mortality reported','Procedure-related mortality reported separately with definition used','30-day mortality reported as minimum standard'], rec:false},
+      {id:'10.6',  text:'Method of adverse event capture described', sub:['If systematic, protocol-driven collection: stated explicitly','If retrospective chart review only: acknowledged as potential source of underreporting'], rec:false},
+      {id:'10.7',  text:'Unplanned reintervention or unplanned readmission reported (if occurred: indication, timing, and outcome described)', sub:[], rec:true},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'10.CS.1', text:'Whether adverse event collection was prospective or retrospective — stated explicitly', sub:[], rec:false},
+      ]},
+      {designs:['cohort','rct'], label:'Cohort with Comparator / RCT', note:'', items:[
+        {id:'10.C1', text:'Adverse events ascertained by the same method and at the same timepoints across groups', sub:[], rec:false},
+        {id:'10.C2', text:'Between-group differences in adverse event rates analyzed and reported', sub:[], rec:true},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'10.RCT.1', text:'Pre-specified safety endpoints reported alongside efficacy endpoints', sub:[], rec:false},
+        {id:'10.RCT.2', text:'Early stopping for safety addressed, or DSMB decisions disclosed', sub:[], rec:false},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'10.REG.1', text:'Adverse event capture method across centers described (mandatory vs. voluntary reporting)', sub:[], rec:false},
+        {id:'10.REG.2', text:'Completeness of adverse event data reported (% with safety data available)', sub:[], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D11', title:'FOLLOW-UP & STATISTICAL ANALYSIS',
+    items:[
+      {id:'11.1', text:'Follow-up protocol described', sub:['Clinical follow-up: timing and method stated (in-person, telephone, electronic records)','Imaging follow-up: modality, timing, and criteria for unscheduled imaging described'], rec:false},
+      {id:'11.2', text:'Follow-up duration reported (median with range or IQR; minimum follow-up for primary endpoint stated)', sub:[], rec:false},
+      {id:'11.3', text:'Loss to follow-up reported explicitly', sub:['Number and proportion lost at each timepoint reported (n/N, %)','Reasons for loss described when available','Whether loss was random or potentially informative addressed'], rec:false},
+      {id:'11.4', text:'Reintervention during follow-up reported (planned vs. unplanned distinguished; impact on primary outcome analysis described)', sub:[], rec:false},
+      {id:'11.5', text:'Statistical methods appropriate for the study design described for each endpoint', sub:[], rec:false},
+      {id:'11.6', text:'Descriptive statistics reported with appropriate measures', sub:['Normally distributed continuous variables: mean ± SD','Non-normally distributed variables: median with IQR or range','Categorical variables: n/N and %'], rec:false},
+      {id:'11.7', text:'Time-to-event analysis described when applicable', sub:['If Kaplan-Meier used: censoring rules explicitly stated','If competing risks present (e.g. death before local recurrence): competing risk analysis performed or absence justified'], rec:true},
+      {id:'11.8', text:'Handling of missing data described', sub:['If complete case analysis: stated explicitly and proportion of missing data reported','If imputation used: method described (single vs. multiple imputation)','If missing data >10% for primary endpoint: sensitivity analysis performed'], rec:true},
+      {id:'11.9', text:'Statistical software identified (name and version)', sub:[], rec:false},
+    ],
+    conditionals:[
+      {designs:['case-series'], label:'Case Series', note:'', items:[
+        {id:'11.CS.1', text:'Confidence intervals reported for all primary outcome estimates', sub:[], rec:true},
+        {id:'11.CS.2', text:'Subgroup analyses declared as exploratory and hypothesis-generating only', sub:[], rec:true},
+      ]},
+      {designs:['cohort'], label:'Cohort with Comparator', note:'', items:[
+        {id:'11.CO.1', text:'Confounding control method described', sub:['If multivariable regression: variables included and selection criteria stated','If propensity score: method described (matching, weighting, or stratification) and balance assessment reported'], rec:false},
+        {id:'11.CO.2', text:'Effect measure reported with 95% CI for primary endpoint', sub:[], rec:false},
+      ]},
+      {designs:['rct'], label:'RCT', note:'', items:[
+        {id:'11.RCT.1', text:'Sample size calculation reported', sub:['Assumptions stated: expected event rate, MCID, alpha, power','Actual achieved power reported if enrollment fell short of target'], rec:false},
+        {id:'11.RCT.2', text:'Analysis population defined (ITT, modified ITT, or per-protocol — declared with rationale)', sub:[], rec:false},
+        {id:'11.RCT.3', text:'Interim analyses and stopping rules disclosed', sub:[], rec:true},
+        {id:'11.RCT.4', text:'Multiplicity corrections applied when multiple primary endpoints or interim analyses performed', sub:[], rec:true},
+      ]},
+      {designs:['registry'], label:'Registry', note:'', items:[
+        {id:'11.REG.1', text:'Unit of analysis defined (patient, procedure, or lesion — with justification if procedure or lesion-level)', sub:[], rec:false},
+        {id:'11.REG.2', text:'Clustering by center accounted for in analysis', sub:['If multilevel or mixed model used: stated explicitly','If ignored: acknowledged as limitation'], rec:true},
+      ]},
+    ]
+  },
+  {
+    id:'D12', title:'FUNDING, CONFLICTS OF INTEREST & DATA AVAILABILITY',
+    items:[
+      {id:'12.1', text:'Funding sources disclosed', sub:['If industry-funded: sponsor identified and role in study design, data collection, analysis, and manuscript preparation described','If publicly funded: grant number and funding body identified','If no external funding: explicit statement provided'], rec:false},
+      {id:'12.2', text:'Conflicts of interest disclosed for all authors', sub:['Device or pharmaceutical relationships relevant to the study declared','Consulting, speaker fees, or equity relevant to devices or agents used disclosed','If no conflicts: explicit statement provided'], rec:false},
+      {id:'12.3', text:'Role of sponsor in the study described (whether sponsor had access to data, participated in analysis, or held publication veto — stated explicitly)', sub:[], rec:true},
+      {id:'12.4', text:'Data availability statement provided', sub:['If data available upon request: contact mechanism stated','If data deposited in repository: repository name and accession number provided','If data cannot be shared: reason stated'], rec:true},
+      {id:'12.5', text:'Statistical analysis code or analysis plan availability addressed (if available: repository or supplementary material location stated)', sub:[], rec:true},
+    ],
+    conditionals:[]
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let activeDesigns = new Set();
+let checked = {};
+let pageNotes = {};
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('checklist');
+  container.innerHTML = '';
+
+  DOMAINS.forEach(domain => {
+    const domainEl = document.createElement('div');
+    domainEl.className = 'domain';
+    domainEl.id = 'domain-' + domain.id;
+
+    // Domain header
+    const hdr = document.createElement('div');
+    hdr.className = 'domain-header';
+    hdr.innerHTML = `<span class="domain-id">${domain.id}</span><span>${domain.title}</span><span class="domain-toggle">▲</span>`;
+    hdr.onclick = () => toggleDomain(domain.id);
+    domainEl.appendChild(hdr);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'domain-body';
+    body.id = 'body-' + domain.id;
+
+    // Column headers
+    const colHdr = document.createElement('div');
+    colHdr.className = 'col-headers';
+    colHdr.innerHTML = '<span>Item</span><span>Reporting item</span><span>Manuscript page</span>';
+    body.appendChild(colHdr);
+
+    // Core items
+    domain.items.forEach(item => {
+      body.appendChild(buildItemRow(item, false));
+    });
+
+    // Conditional blocks
+    domain.conditionals.forEach(cond => {
+      const block = document.createElement('div');
+      block.className = 'cond-block';
+      block.dataset.designs = cond.designs.join(' ');
+
+      const condHdr = document.createElement('div');
+      condHdr.className = 'cond-header';
+      condHdr.textContent = cond.label;
+      block.appendChild(condHdr);
+
+      if (cond.note) {
+        const noteEl = document.createElement('div');
+        noteEl.className = 'cond-note';
+        noteEl.textContent = cond.note;
+        block.appendChild(noteEl);
+      }
+
+      cond.items.forEach(item => {
+        block.appendChild(buildItemRow(item, true));
+      });
+
+      body.appendChild(block);
+    });
+
+    domainEl.appendChild(body);
+    container.appendChild(domainEl);
+  });
+
+  applyDesigns();
+  restoreState();
+  updateProgress();
+}
+
+function buildItemRow(item, isCond) {
+  const row = document.createElement('div');
+  row.className = 'item-row' + (isCond ? ' cond-item' : '');
+  row.dataset.itemId = item.id;
+
+  // ID
+  const idEl = document.createElement('div');
+  idEl.className = 'item-id';
+  idEl.textContent = item.id;
+
+  // Content
+  const content = document.createElement('div');
+  content.className = 'item-content';
+
+  const checkWrap = document.createElement('div');
+  checkWrap.className = 'item-check-wrap';
+
+  const cb = document.createElement('div');
+  cb.className = 'custom-cb' + (checked[item.id] ? ' checked' : '');
+  cb.onclick = () => toggleCheck(item.id);
+
+  const textWrap = document.createElement('div');
+  const textEl = document.createElement('span');
+  textEl.className = 'item-text' + (checked[item.id] ? ' checked-text' : '');
+  textEl.textContent = item.text;
+  textWrap.appendChild(textEl);
+
+  if (item.rec) {
+    const recEl = document.createElement('span');
+    recEl.className = 'rec-tag';
+    recEl.textContent = '(recommended)';
+    textWrap.appendChild(recEl);
+  }
+
+  checkWrap.appendChild(cb);
+  checkWrap.appendChild(textWrap);
+  content.appendChild(checkWrap);
+
+  if (item.sub && item.sub.length > 0) {
+    const subList = document.createElement('div');
+    subList.className = 'sub-items';
+    item.sub.forEach(s => {
+      const si = document.createElement('div');
+      si.className = 'sub-item';
+      si.textContent = s;
+      subList.appendChild(si);
+    });
+    content.appendChild(subList);
+  }
+
+  // Page input
+  const pageWrap = document.createElement('div');
+  const pageIn = document.createElement('input');
+  pageIn.type = 'text';
+  pageIn.className = 'page-input';
+  pageIn.placeholder = 'p. ___';
+  pageIn.value = pageNotes[item.id] || '';
+  pageIn.oninput = () => { pageNotes[item.id] = pageIn.value; };
+  pageWrap.appendChild(pageIn);
+
+  row.appendChild(idEl);
+  row.appendChild(content);
+  row.appendChild(pageWrap);
+
+  if (checked[item.id]) row.classList.add('checked-row');
+
+  return row;
+}
+
+// ── INTERACTIONS ─────────────────────────────────────────────────────────────
+function toggleCheck(itemId) {
+  checked[itemId] = !checked[itemId];
+  const rows = document.querySelectorAll(`[data-item-id="${itemId}"]`);
+  rows.forEach(row => {
+    const cb   = row.querySelector('.custom-cb');
+    const text = row.querySelector('.item-text');
+    if (cb)   cb.classList.toggle('checked', checked[itemId]);
+    if (text) text.classList.toggle('checked-text', checked[itemId]);
+    row.classList.toggle('checked-row', checked[itemId]);
+  });
+  updateProgress();
+}
+
+function toggleDomain(id) {
+  const body   = document.getElementById('body-' + id);
+  const toggle = document.querySelector('#domain-' + id + ' .domain-toggle');
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  toggle.textContent = hidden ? '▲' : '▼';
+}
+
+function updateGate() {
+  const hasDesign = activeDesigns.size > 0;
+  document.getElementById('design-gate').classList.toggle('visible', !hasDesign);
+  document.body.classList.toggle('no-design', !hasDesign);
+}
+
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const d = pill.dataset.design;
+    if (activeDesigns.has(d)) activeDesigns.delete(d);
+    else activeDesigns.add(d);
+    pill.classList.toggle('active', activeDesigns.has(d));
+    applyDesigns();
+    updateProgress();
+    updateGate();
+  });
+});
+
+const DESIGN_LABELS = [
+  {key:'case-series', label:'Case Series'},
+  {key:'cohort',      label:'Cohort'},
+  {key:'rct',         label:'RCT'},
+  {key:'registry',    label:'Registry'},
+  {key:'case-control',label:'Case-Control'},
+];
+
+function applyDesigns() {
+  document.querySelectorAll('.cond-block').forEach(block => {
+    const blockDesigns = block.dataset.designs.split(' ');
+    const visible = blockDesigns.some(d => activeDesigns.has(d));
+    block.classList.toggle('visible', visible);
+  });
+  // Update print header design checkboxes
+  const el = document.getElementById('print-designs');
+  if (el) {
+    el.innerHTML = DESIGN_LABELS.map(d => {
+      const sel = activeDesigns.has(d.key);
+      const box = sel
+        ? `<span style="display:inline-block;width:9pt;height:9pt;background:#1A7FAA;border:1pt solid #1A7FAA;vertical-align:middle;text-align:center;line-height:9pt;color:#fff;font-size:6.5pt;font-weight:900;-webkit-print-color-adjust:exact;print-color-adjust:exact;">&#10003;</span>`
+        : `<span style="display:inline-block;width:9pt;height:9pt;border:1pt solid #999;vertical-align:middle;"></span>`;
+      return `${box}&nbsp;<span style="color:${sel ? '#1C3A6E' : '#555'};font-weight:${sel ? '700' : '400'};">${d.label}</span>`;
+    }).join('&nbsp;&nbsp;&nbsp;');
+  }
+}
+
+// ── PROGRESS ────────────────────────────────────────────────────────────────
+function updateProgress() {
+  let total = 0, done = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    // Only count visible items
+    const block = row.closest('.cond-block');
+    if (block && !block.classList.contains('visible')) return;
+    total++;
+    if (checked[row.dataset.itemId]) done++;
+  });
+  document.getElementById('checked-count').textContent = done;
+  document.getElementById('total-count').textContent   = total;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('pct-text').textContent      = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ── SAVE / RESTORE ───────────────────────────────────────────────────────────
+function saveProgress() {
+  localStorage.setItem('concur_checked',   JSON.stringify(checked));
+  localStorage.setItem('concur_pages',     JSON.stringify(pageNotes));
+  localStorage.setItem('concur_designs',   JSON.stringify([...activeDesigns]));
+  showToast('Progress saved ✓');
+}
+
+function restoreState() {
+  const c = localStorage.getItem('concur_checked');
+  const p = localStorage.getItem('concur_pages');
+  const d = localStorage.getItem('concur_designs');
+  if (c) checked   = JSON.parse(c);
+  if (p) pageNotes = JSON.parse(p);
+  if (d) {
+    activeDesigns = new Set(JSON.parse(d));
+    activeDesigns.forEach(design => {
+      const pill = document.querySelector(`[data-design="${design}"]`);
+      if (pill) pill.classList.add('active');
+    });
+    applyDesigns();
+  }
+  updateGate();
+}
+
+function resetAll() {
+  if (!confirm('Reset all checkboxes and page numbers?')) return;
+  checked = {}; pageNotes = {};
+  localStorage.removeItem('concur_checked');
+  localStorage.removeItem('concur_pages');
+  render();
+  showToast('Checklist reset');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
